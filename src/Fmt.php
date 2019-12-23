@@ -10,6 +10,46 @@ use Com\Alibaba\Otter\Canal\Protocol\RowData;
 
 class Fmt
 {
+    public static function parseEntry($entry) {
+        switch ($entry->getEntryType()) {
+            case EntryType::TRANSACTIONBEGIN:
+            case EntryType::TRANSACTIONEND:
+                return;
+                break;
+        }
+
+        $rowChange = new RowChange();
+        $rowChange->mergeFromString($entry->getStoreValue());
+        $evenType = $rowChange->getEventType();
+        $header = $entry->getHeader();
+
+        $table_name = $header->getTableName();
+        $sql = $rowChange->getSql();
+
+        $refreshIds = [];
+        /** @var RowData $rowData */
+        foreach ($rowChange->getRowDatas() as $rowData) {
+            switch ($evenType) {
+                case EventType::INSERT:
+                    $columns = $rowData->getAfterColumns();
+                    break;
+                default:
+                    $columns = $rowData->getBeforeColumns();
+                    break;
+            }
+            if ($columns) {
+                foreach ($columns as $column) {
+                    $columnName = $column->getName();
+                    if ($columnName == "id") {
+                        $refreshIds[] = $column->getValue();
+                    }
+                }
+                echo("表名: " . $table_name . ", sql语句: " . $sql . ", id: " . implode(',', $refreshIds)) . PHP_EOL;
+            }
+        }
+
+    }
+
     /**
      * @param Entry $entry
      * @throws \Exception

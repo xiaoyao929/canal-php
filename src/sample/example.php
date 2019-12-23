@@ -16,14 +16,14 @@ try {
 
     $client->connect("127.0.0.1", 11111);
     $client->checkValid();
-    $client->subscribe("1001", "example", ".*\\..*");
-    # $client->subscribe("1001", "example", "db_name.tb_name"); # 设置过滤
+    $client->subscribe("1001", "example", "dvuk.goods,dvuk.products");
 
     while (true) {
         $message = $client->get(100);
         if ($entries = $message->getEntries()) {
             foreach ($entries as $entry) {
-                Fmt::println($entry);
+//                Fmt::println($entry);
+                Fmt::parseEntry($entry);
             }
         }
         sleep(1);
